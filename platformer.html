@@ -91,11 +91,21 @@ let standingPlatform = null;
 let keyItems = [], keysCollected = 0, doorBumpTimer = 0;
 let bgBlobs = [];
 let skyCanvas = null;
-let bankKeys   = parseInt(localStorage.getItem('pf_bankKeys') || '0');
-let ownedChars = new Set(JSON.parse(localStorage.getItem('pf_ownedChars') || '["default"]'));
+let bankKeys   = parseInt(localStorage.getItem('pf_bankKeys')  || '0');
+let fireKeys   = parseInt(localStorage.getItem('pf_fireKeys')  || '0');
+let waterKeys  = parseInt(localStorage.getItem('pf_waterKeys') || '0');
+let elecKeys   = parseInt(localStorage.getItem('pf_elecKeys')  || '0');
+let ownedChars = new Set(JSON.parse(localStorage.getItem('pf_ownedChars') || '["default","kai"]'));
 let activeChar = localStorage.getItem('pf_activeChar') || 'default';
 let shopOpen   = false;
+let shopTab    = 'girls';
 let shopBtnRects = [];
+function charCurr(ch) {
+  if (ch.world === 1) return { icon:'🔥', count: fireKeys,  lsKey:'pf_fireKeys'  };
+  if (ch.world === 2) return { icon:'💧', count: waterKeys, lsKey:'pf_waterKeys' };
+  if (ch.world === 3) return { icon:'⚡', count: elecKeys,  lsKey:'pf_elecKeys'  };
+  return                     { icon:'🗝', count: bankKeys,  lsKey:'pf_bankKeys'  };
+}
 let confetti = [];
 let lives = 3, lifeTimer = 0;
 const LIFE_RESET = 7200; // 2 minutes at 60 fps
@@ -496,6 +506,33 @@ const CHARS = [
     hair:'#d0a010', hlit:'#f0c030', hdrk:'#906000',
     shirt:'#d4b030', slit:'#f0d050', sdrk:'#907010',
     pants:'#e8e0c0', shoe:'#ffffff' },
+  // ── World I – Fire ────────────────────────────────────────────────────────
+  { id:'ember',  name:'Ember',  price:6,  world:1,
+    hair:'#ff6020', hlit:'#ffa050', hdrk:'#b02000',
+    dress:'#c03010', dlit:'#e05020', ddrk:'#801008',
+    belt:'#ffd700',  shoe:'#ff4000' },
+  { id:'pyro',   name:'Pyro',   price:6,  male:true, world:1,
+    hair:'#2a1008', hlit:'#5a2818', hdrk:'#100400',
+    shirt:'#c05010', slit:'#e07030', sdrk:'#802000',
+    pants:'#3a1808', shoe:'#ff6020' },
+  // ── World II – Ocean ──────────────────────────────────────────────────────
+  { id:'marina', name:'Marina', price:14, world:2,
+    hair:'#1a8888', hlit:'#30c8c8', hdrk:'#0a4848',
+    dress:'#0048a0', dlit:'#0078d8', ddrk:'#002860',
+    belt:'#80ffee',  shoe:'#48dbfb' },
+  { id:'tide',   name:'Tide',   price:14, male:true, world:2,
+    hair:'#c0a060', hlit:'#e0c080', hdrk:'#806040',
+    shirt:'#0068a0', slit:'#0098d0', sdrk:'#003870',
+    pants:'#0a3050', shoe:'#48dbfb' },
+  // ── World III – Cosmic ────────────────────────────────────────────────────
+  { id:'nova',   name:'Nova',   price:24, world:3,
+    hair:'#7020a0', hlit:'#a040e0', hdrk:'#380850',
+    dress:'#4a0080', dlit:'#7000c0', ddrk:'#200040',
+    belt:'#ffd700',  shoe:'#e040fb' },
+  { id:'cosmos', name:'Cosmos', price:24, male:true, world:3,
+    hair:'#180828', hlit:'#400880', hdrk:'#080010',
+    shirt:'#1a0040', slit:'#3800a0', sdrk:'#080020',
+    pants:'#100030', shoe:'#aa00ff' },
 ];
 
 const PLAT_TH = Math.round(H * 0.022);  // platform thickness
@@ -941,8 +978,10 @@ function drawKeyHUD() {
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillText('Keys:', sx, y);
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#FFD700';
-  ctx.fillText(`🗝 ${bankKeys}`, W - 16, y);
+  if      (activeWorld === 1) { ctx.fillStyle = '#FF8040'; ctx.fillText(`🔥 ${fireKeys}`,  W - 16, y); }
+  else if (activeWorld === 2) { ctx.fillStyle = '#48DBFB'; ctx.fillText(`💧 ${waterKeys}`, W - 16, y); }
+  else if (activeWorld === 3) { ctx.fillStyle = '#FFE030'; ctx.fillText(`⚡ ${elecKeys}`,  W - 16, y); }
+  else                        { ctx.fillStyle = '#FFD700'; ctx.fillText(`🗝 ${bankKeys}`,  W - 16, y); }
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(220,220,220,0.8)';
   for (let i = 0; i < 3; i++) {
@@ -1314,11 +1353,18 @@ function drawFigure(x, y, la, f, charId, staticPose) {
 function drawShop() {
   if (!shopOpen) return;
 
+  // World card color themes indexed by ch.world (1/2/3)
+  const WC = [null,
+    { bg:'#1a0800', bgOwn:'#2a1200', brd:'#e74c3c', brdOwn:'#ff6040' },
+    { bg:'#001808', bgOwn:'#002010', brd:'#1abc9c', brdOwn:'#2adaa8' },
+    { bg:'#0a0018', bgOwn:'#140028', brd:'#9b59b6', brdOwn:'#bf79d8' },
+  ];
+
   ctx.fillStyle = 'rgba(0,0,0,0.78)';
   ctx.fillRect(0, 0, W, H);
 
   const pw  = Math.min(Math.round(W * 0.92), 780);
-  const ph  = Math.min(Math.round(H * 0.94), 580);
+  const ph  = Math.min(Math.round(H * 0.92), 520);
   const px  = Math.round((W - pw) / 2);
   const py  = Math.round((H - ph) / 2);
   const pr  = 14;
@@ -1341,10 +1387,18 @@ function drawShop() {
   ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('✨ Character Shop', W / 2, py + titleH / 2);
 
-  // Bank keys
-  ctx.font = `bold ${Math.round(H * 0.025)}px "Comic Sans MS", cursive`;
-  ctx.fillStyle = '#FFD700'; ctx.textAlign = 'right';
-  ctx.fillText(`🗝 ${bankKeys}`, px + pw - 46, py + titleH / 2);
+  // Bank keys / world currencies
+  const _ty = py + titleH / 2;
+  ctx.textAlign = 'right';
+  if (shopTab === 'world') {
+    ctx.font = `bold ${Math.round(H * 0.021)}px "Comic Sans MS", cursive`;
+    ctx.fillStyle = '#FF8040'; ctx.fillText(`🔥 ${fireKeys}`,  px + pw - 160, _ty);
+    ctx.fillStyle = '#48DBFB'; ctx.fillText(`💧 ${waterKeys}`, px + pw - 95,  _ty);
+    ctx.fillStyle = '#FFE030'; ctx.fillText(`⚡ ${elecKeys}`,  px + pw - 46,  _ty);
+  } else {
+    ctx.font = `bold ${Math.round(H * 0.025)}px "Comic Sans MS", cursive`;
+    ctx.fillStyle = '#FFD700'; ctx.fillText(`🗝 ${bankKeys}`, px + pw - 46, _ty);
+  }
 
   // Close button
   shopBtnRects = [{ type:'close', x: px + pw - 34, y: py + 8, w: 26, h: 26 }];
@@ -1354,121 +1408,152 @@ function drawShop() {
   ctx.font = `bold 15px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('×', px + pw - 21, py + 21);
 
-  // 2-row layout: females on top, males on bottom
-  const females = CHARS.filter(c => !c.male);
-  const males   = CHARS.filter(c =>  c.male);
-  const n       = Math.max(females.length, males.length);
-  const gap     = 8;
-  const cardW   = Math.floor((pw - 24 - gap * (n - 1)) / n);
-  const rowGap  = 26;
-  const rowH    = Math.floor((ph - titleH - 16 - rowGap - 10) / 2);
-  const startX  = px + 12;
-
-  function drawRow(chars, rowY, secLabel) {
+  // Tab bar
+  const tabH  = 32;
+  const tabY  = py + titleH + 7;
+  const TABS  = [['girls','♀ Girls'], ['boys','♂ Boys'], ['world','🌍 Worlds']];
+  const tabTW = Math.min(110, Math.round((pw - 32) / 3));
+  const tabsX = px + Math.round((pw - tabTW * 3 - 8) / 2);
+  for (let t = 0; t < TABS.length; t++) {
+    const [tid, tlabel] = TABS[t];
+    const act = shopTab === tid;
+    const tx  = tabsX + t * (tabTW + 4);
+    ctx.fillStyle = act ? '#2a4a8a' : '#0d1a30';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(tx, tabY, tabTW, tabH, 8);
+    else ctx.rect(tx, tabY, tabTW, tabH);
+    ctx.fill();
+    ctx.strokeStyle = act ? '#6a90ff' : '#3a4880'; ctx.lineWidth = act ? 2 : 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(tx, tabY, tabTW, tabH, 8);
+    else ctx.rect(tx, tabY, tabTW, tabH);
+    ctx.stroke();
+    ctx.fillStyle = act ? '#ffffff' : '#7080a0';
     ctx.font = `bold ${Math.round(H * 0.018)}px "Comic Sans MS", cursive`;
-    ctx.fillStyle = '#8090b8'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(secLabel, px + 15, rowY - 8);
-
-    const cardH  = rowH - 2;
-    const prevSc = Math.min(1.5, (cardH - 88) / FH);
-    const prevH  = Math.round(FH * prevSc);
-
-    for (let i = 0; i < chars.length; i++) {
-      const ch    = chars[i];
-      const owned = ownedChars.has(ch.id);
-      const sel   = ch.id === activeChar;
-      const cx    = startX + i * (cardW + gap);
-
-      ctx.fillStyle = sel ? '#1a3a6a' : owned ? '#162040' : '#101828';
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(cx, rowY, cardW, cardH, 8);
-      else ctx.rect(cx, rowY, cardW, cardH);
-      ctx.fill();
-      ctx.strokeStyle = sel ? '#6a90ff' : owned ? '#3a4880' : '#232840';
-      ctx.lineWidth = sel ? 2 : 1;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(cx, rowY, cardW, cardH, 8);
-      else ctx.rect(cx, rowY, cardW, cardH);
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.round(H * 0.020)}px "Comic Sans MS", cursive`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(ch.name, cx + cardW / 2, rowY + 6);
-
-      const previewCY = rowY + 24;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(cx + 2, previewCY, cardW - 4, prevH + 4); ctx.clip();
-      ctx.translate(cx + cardW / 2, previewCY);
-      ctx.scale(prevSc, prevSc);
-      drawFigure(0, 0, 0, 1, ch.id, true);
-      ctx.restore();
-
-      if (!owned && bankKeys < ch.price) {
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(cx + 2, previewCY, cardW - 4, prevH + 4, 4);
-        else ctx.rect(cx + 2, previewCY, cardW - 4, prevH + 4);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.font = `${Math.round(H * 0.028)}px sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🔒', cx + cardW / 2, previewCY + prevH / 2);
-      }
-
-      const priceY = previewCY + prevH + 5;
-      ctx.font = `bold ${Math.round(H * 0.018)}px "Comic Sans MS", cursive`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      if (ch.price === 0) {
-        ctx.fillStyle = '#88dd88'; ctx.fillText('Free', cx + cardW / 2, priceY);
-      } else if (owned) {
-        ctx.fillStyle = '#88dd88'; ctx.fillText('Owned ✓', cx + cardW / 2, priceY);
-      } else {
-        ctx.fillStyle = bankKeys >= ch.price ? '#FFD700' : '#888888';
-        ctx.fillText(`🗝 ${ch.price}`, cx + cardW / 2, priceY);
-      }
-
-      const btnH = 24;
-      const btnY = rowY + cardH - btnH - 5;
-      const btnX = cx + 6;
-      const btnW = cardW - 12;
-
-      let bgCol, label;
-      if (sel)                         { bgCol = '#1a4030'; label = '✓ Equipped'; }
-      else if (owned)                  { bgCol = '#1a4870'; label = 'Equip'; }
-      else if (bankKeys >= ch.price)   { bgCol = '#1a6030'; label = 'Buy'; }
-      else                             { bgCol = '#222233'; label = `Need ${ch.price} 🗝`; }
-
-      ctx.fillStyle = bgCol;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5);
-      else ctx.rect(btnX, btnY, btnW, btnH);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5);
-      else ctx.rect(btnX, btnY, btnW, btnH);
-      ctx.stroke();
-
-      ctx.fillStyle = sel ? '#aaaaaa' : '#ffffff';
-      ctx.font = `bold ${Math.round(H * 0.017)}px "Comic Sans MS", cursive`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(label, btnX + btnW / 2, btnY + btnH / 2);
-
-      if (!sel) {
-        shopBtnRects.push({
-          type: owned ? 'equip' : (bankKeys >= ch.price ? 'buy' : 'locked'),
-          id: ch.id, price: ch.price,
-          x: btnX, y: btnY, w: btnW, h: btnH
-        });
-      }
-    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(tlabel, tx + tabTW / 2, tabY + tabH / 2);
+    shopBtnRects.push({ type:'tab', tab: tid, x: tx, y: tabY, w: tabTW, h: tabH });
   }
 
-  const row1Y = py + titleH + 16;
-  const row2Y = row1Y + rowH + rowGap;
-  drawRow(females, row1Y, '♀  Girls');
-  drawRow(males,   row2Y, '♂  Boys');
+  // Cards area (full height under tabs)
+  const cardsY = tabY + tabH + 10;
+  const rowH   = ph - (cardsY - py) - 10;
+
+  let visChars;
+  if (shopTab === 'girls')     visChars = CHARS.filter(c => !c.male && !c.world);
+  else if (shopTab === 'boys') visChars = CHARS.filter(c =>  c.male && !c.world);
+  else                         visChars = CHARS.filter(c =>  c.world);
+
+  const n      = visChars.length;
+  const gap    = 10;
+  const cardW  = Math.floor((pw - 24 - gap * (n - 1)) / n);
+  const cardH2 = rowH - 2;
+  const prevSc = Math.min(2.4, (cardH2 - 88) / FH);
+  const prevH  = Math.round(FH * prevSc);
+  const startX = px + 12;
+
+  for (let i = 0; i < n; i++) {
+    const ch    = visChars[i];
+    const owned = ownedChars.has(ch.id);
+    const sel   = ch.id === activeChar;
+    const cx    = startX + i * (cardW + gap);
+    const wc    = ch.world ? WC[ch.world] : null;
+
+    ctx.fillStyle = sel ? '#1a3a6a'
+                  : wc  ? (owned ? wc.bgOwn : wc.bg)
+                        : (owned ? '#162040' : '#101828');
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx, cardsY, cardW, cardH2, 8);
+    else ctx.rect(cx, cardsY, cardW, cardH2);
+    ctx.fill();
+    ctx.strokeStyle = sel ? '#6a90ff'
+                    : wc  ? (owned ? wc.brdOwn : wc.brd)
+                           : (owned ? '#3a4880' : '#232840');
+    ctx.lineWidth = sel ? 2 : 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx, cardsY, cardW, cardH2, 8);
+    else ctx.rect(cx, cardsY, cardW, cardH2);
+    ctx.stroke();
+
+    if (ch.world) {
+      ctx.font = `${Math.round(H * 0.022)}px sans-serif`;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.fillText(WORLD_META[ch.world - 1].icon, cx + cardW - 5, cardsY + 4);
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.round(H * 0.020)}px "Comic Sans MS", cursive`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(ch.name, cx + cardW / 2, cardsY + 6);
+
+    const previewCY = cardsY + 26;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(cx + 2, previewCY, cardW - 4, prevH + 4); ctx.clip();
+    ctx.translate(cx + cardW / 2, previewCY);
+    ctx.scale(prevSc, prevSc);
+    drawFigure(0, 0, 0, 1, ch.id, true);
+    ctx.restore();
+
+    if (!owned && bankKeys < ch.price) {
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cx + 2, previewCY, cardW - 4, prevH + 4, 4);
+      else ctx.rect(cx + 2, previewCY, cardW - 4, prevH + 4);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = `${Math.round(H * 0.028)}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🔒', cx + cardW / 2, previewCY + prevH / 2);
+    }
+
+    const cc     = charCurr(ch);
+    const priceY = previewCY + prevH + 5;
+    ctx.font = `bold ${Math.round(H * 0.018)}px "Comic Sans MS", cursive`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    if (ch.price === 0) {
+      ctx.fillStyle = '#88dd88'; ctx.fillText('Free', cx + cardW / 2, priceY);
+    } else if (owned) {
+      ctx.fillStyle = '#88dd88'; ctx.fillText('Owned ✓', cx + cardW / 2, priceY);
+    } else {
+      ctx.fillStyle = cc.count >= ch.price ? '#FFD700' : '#888888';
+      ctx.fillText(`${cc.icon} ${ch.price}`, cx + cardW / 2, priceY);
+    }
+
+    const btnH = 24;
+    const btnY = cardsY + cardH2 - btnH - 5;
+    const btnX = cx + 6;
+    const btnW = cardW - 12;
+
+    let bgCol, label;
+    if (sel)                       { bgCol = '#1a4030'; label = '✓ Equipped'; }
+    else if (owned)                { bgCol = '#1a4870'; label = 'Equip'; }
+    else if (cc.count >= ch.price) { bgCol = '#1a6030'; label = 'Buy'; }
+    else                           { bgCol = '#222233'; label = `Need ${ch.price} ${cc.icon}`; }
+
+    ctx.fillStyle = bgCol;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5);
+    else ctx.rect(btnX, btnY, btnW, btnH);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(btnX, btnY, btnW, btnH, 5);
+    else ctx.rect(btnX, btnY, btnW, btnH);
+    ctx.stroke();
+
+    ctx.fillStyle = sel ? '#aaaaaa' : '#ffffff';
+    ctx.font = `bold ${Math.round(H * 0.017)}px "Comic Sans MS", cursive`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, btnX + btnW / 2, btnY + btnH / 2);
+
+    if (!sel) {
+      shopBtnRects.push({
+        type: owned ? 'equip' : (cc.count >= ch.price ? 'buy' : 'locked'),
+        id: ch.id, price: ch.price, world: ch.world || 0,
+        x: btnX, y: btnY, w: btnW, h: btnH
+      });
+    }
+  }
 
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
@@ -1704,7 +1789,10 @@ function update() {
     const ky = k.platRef.y - KEY_FLOAT;
     if (Math.abs(player.x - kx) < FW * 2.5 && Math.abs((player.y + FH*0.5) - ky) < FH * 0.75) {
       k.collected = true; k.anim = 0; keysCollected++;
-      bankKeys++; localStorage.setItem('pf_bankKeys', bankKeys);
+      if      (activeWorld === 1) { fireKeys++;  localStorage.setItem('pf_fireKeys',  fireKeys); }
+      else if (activeWorld === 2) { waterKeys++; localStorage.setItem('pf_waterKeys', waterKeys); }
+      else if (activeWorld === 3) { elecKeys++;  localStorage.setItem('pf_elecKeys',  elecKeys); }
+      else                        { bankKeys++;  localStorage.setItem('pf_bankKeys',  bankKeys); }
       if (keysCollected === 3) playAllKeys(); else playPickup();
     }
   }
@@ -2031,14 +2119,17 @@ canvas.addEventListener('click', e => {
   for (const btn of shopBtnRects) {
     if (sx >= btn.x && sx <= btn.x + btn.w && sy >= btn.y && sy <= btn.y + btn.h) {
       if (btn.type === 'close') { shopOpen = false; }
+      else if (btn.type === 'tab') { shopTab = btn.tab; }
       else if (btn.type === 'equip') {
         activeChar = btn.id;
         localStorage.setItem('pf_activeChar', activeChar);
       } else if (btn.type === 'buy') {
-        bankKeys -= btn.price;
+        if      (btn.world === 1) { fireKeys  -= btn.price; localStorage.setItem('pf_fireKeys',  fireKeys); }
+        else if (btn.world === 2) { waterKeys -= btn.price; localStorage.setItem('pf_waterKeys', waterKeys); }
+        else if (btn.world === 3) { elecKeys  -= btn.price; localStorage.setItem('pf_elecKeys',  elecKeys); }
+        else                      { bankKeys  -= btn.price; localStorage.setItem('pf_bankKeys',  bankKeys); }
         ownedChars.add(btn.id);
         activeChar = btn.id;
-        localStorage.setItem('pf_bankKeys', bankKeys);
         localStorage.setItem('pf_ownedChars', JSON.stringify([...ownedChars]));
         localStorage.setItem('pf_activeChar', activeChar);
       }
