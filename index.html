@@ -21,7 +21,7 @@
 
     html, body {
       height: 100%;
-      background: #6B1020;
+      background: #3A000C;
       color: var(--text);
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
       overflow: hidden;
@@ -377,6 +377,95 @@
       outline: 2px solid #B85050;
       outline-offset: 3px;
     }
+
+    /* ── Shadow Screen ── */
+    #shadowScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #050002;
+      z-index: 500;
+      flex-direction: column;
+    }
+    #shadowScreen.open { display: flex; }
+
+    .ss-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0.85rem 1.5rem;
+      border-bottom: 1px solid #200008;
+      flex-shrink: 0;
+      height: 52px;
+    }
+    .ss-back {
+      background: none; border: none;
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: #804040; cursor: pointer; transition: color 150ms;
+    }
+    .ss-back:hover { color: var(--text); }
+    .ss-level-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.88rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--text);
+    }
+    .ss-hint {
+      font-size: 0.7rem; letter-spacing: 0.1em;
+      color: var(--muted); margin-left: auto; font-style: italic;
+    }
+    #gameCvs {
+      flex: 1; display: block; width: 100%;
+      cursor: grab; min-height: 0;
+    }
+    #gameCvs:active { cursor: grabbing; }
+
+    .ss-drag-label {
+      position: absolute; bottom: 1rem; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+      color: rgba(120,40,20,0.6); pointer-events: none;
+    }
+
+    #ssSolvedOverlay {
+      display: none; position: absolute; inset: 0; z-index: 10;
+      background: rgba(2,0,1,0.80);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 1.8rem;
+      font-family: 'Cinzel', serif; font-size: 2.4rem; font-weight: 700;
+      letter-spacing: 0.15em; color: var(--amber);
+      text-shadow: 0 0 55px rgba(212,130,42,0.9);
+    }
+    #ssSolvedOverlay.show { display: flex; }
+    .ss-next-btn {
+      font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      background: var(--amber); color: #100204;
+      border: none; padding: 0.8rem 2.2rem; cursor: pointer;
+      clip-path: polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+      transition: box-shadow 200ms;
+    }
+    .ss-next-btn:hover { box-shadow: 0 0 26px rgba(212,130,42,0.65); }
+
+    .lvl-btn {
+      aspect-ratio: 1;
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: #7A1820;
+      color: #F5EDE0;
+      border: 2px solid #5A0E16;
+      cursor: pointer;
+      transition: background 150ms, transform 80ms, box-shadow 150ms;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+
+    .lvl-btn:hover {
+      background: #5A0E16;
+      box-shadow: 0 4px 22px rgba(90, 14, 22, 0.45);
+    }
+
+    .lvl-btn:active { transform: scale(0.95); }
   </style>
 </head>
 <body>
@@ -385,7 +474,6 @@
 
 <main class="home">
   <div class="logo">
-    <p class="logo-eyebrow">A Platform Adventure</p>
     <h1 class="logo-title">Umbral</h1>
   </div>
 
@@ -395,6 +483,67 @@
     <button class="btn-menu" id="btnSettings">Settings</button>
   </nav>
 </main>
+
+<!-- Game screen -->
+<div id="gameScreen" style="display:none;position:fixed;inset:0;background:#F0E2D0;z-index:300;">
+  <button id="btnBackToMenu" style="
+    position: absolute;
+    top: 1.2rem; left: 1.4rem;
+    background: none;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8B3A2A;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 150ms;
+  " onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">← Menu</button>
+
+  <div style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 2rem;
+  ">
+    <h2 style="
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #6B2010;
+    ">Select Level</h2>
+
+    <div style="
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1.8rem;
+      width: 100%;
+      max-width: 860px;
+      padding: 0 2.5rem;
+    ">
+      <button class="lvl-btn" data-level="1">1</button>
+      <button class="lvl-btn" data-level="2">2</button>
+      <button class="lvl-btn" data-level="3">3</button>
+      <button class="lvl-btn" data-level="4">4</button>
+      <button class="lvl-btn" data-level="5">5</button>
+      <button class="lvl-btn" data-level="6">6</button>
+      <button class="lvl-btn" data-level="7">7</button>
+      <button class="lvl-btn" data-level="8">8</button>
+      <button class="lvl-btn" data-level="9">9</button>
+      <button class="lvl-btn" data-level="10">10</button>
+      <button class="lvl-btn" data-level="11">11</button>
+      <button class="lvl-btn" data-level="12">12</button>
+      <button class="lvl-btn" data-level="13">13</button>
+      <button class="lvl-btn" data-level="14">14</button>
+      <button class="lvl-btn" data-level="15">15</button>
+    </div>
+  </div>
+</div>
 
 <!-- Settings panel -->
 <div class="overlay" id="overlay" aria-hidden="true">
@@ -406,8 +555,8 @@
       <label class="panel-label" for="volSlider">Music Volume</label>
       <div class="vol-track">
         <span class="vol-icon">♪</span>
-        <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="40">
-        <span class="vol-num" id="volNum">40</span>
+        <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="52">
+        <span class="vol-num" id="volNum">52</span>
       </div>
     </div>
 
@@ -417,6 +566,21 @@
       <p class="panel-desc">Erase all saved progress and return to the very beginning.</p>
       <button class="btn-reset" id="btnReset">Reset Game</button>
     </div>
+  </div>
+</div>
+
+<!-- Shadowmatic level screen -->
+<div id="shadowScreen">
+  <div class="ss-header">
+    <button class="ss-back" id="btnSsBack">← Levels</button>
+    <span class="ss-level-name" id="ssLevelName">Level 1 · House</span>
+    <span class="ss-hint" id="ssHint">A cozy home</span>
+  </div>
+  <canvas id="gameCvs"></canvas>
+  <span class="ss-drag-label">Drag to rotate the object</span>
+  <div id="ssSolvedOverlay">
+    <span>✓ Solved</span>
+    <button class="ss-next-btn" id="ssNextBtn">Next Level →</button>
   </div>
 </div>
 
@@ -435,321 +599,240 @@
   resize();
   window.addEventListener('resize', resize);
 
-  const SUN = { nx: 0.74, ny: 0.68 };
-
-  const RAYS = [
-    { angle: -1.65, hw: 0.022, alpha: 0.045, phase: 0.0  },
-    { angle: -1.45, hw: 0.038, alpha: 0.060, phase: 1.3  },
-    { angle: -1.25, hw: 0.018, alpha: 0.035, phase: 2.6  },
-    { angle: -1.08, hw: 0.050, alpha: 0.055, phase: 0.7  },
-    { angle: -0.92, hw: 0.025, alpha: 0.040, phase: 2.1  },
-    { angle: -0.75, hw: 0.042, alpha: 0.050, phase: 3.4  },
-    { angle: -0.58, hw: 0.020, alpha: 0.030, phase: 1.8  },
-  ];
-
-  const motes = Array.from({ length: 60 }, () => ({
-    x:    Math.random(),
-    y:    Math.random(),
-    r:    Math.random() * 1.1 + 0.2,
-    phase: Math.random() * Math.PI * 2,
-    drift: (Math.random() - 0.5) * 0.00015,
-    bob:   (Math.random() - 0.5) * 0.00010,
-    alpha: Math.random() * 0.18 + 0.04
-  }));
-
-  function makeCloud(depth) {
-    const cfg = [
-      { speed: 0.10, scale: 1.0 },
-      { speed: 0.055, scale: 1.6 },
-      { speed: 0.028, scale: 2.4 }
-    ][depth];
-    return {
-      x: Math.random(),
-      y: 0.04 + Math.random() * 0.62,
-      w: (0.10 + Math.random() * 0.18) * cfg.scale,
-      h: (0.030 + Math.random() * 0.046) * cfg.scale,
-      speed: cfg.speed * (0.7 + Math.random() * 0.6),
-      depth,
-      puffs: (() => { const n = 4 + Math.floor(Math.random() * 5); return Array.from({ length: n }, (_, i) => ({ ox: (i / Math.max(n - 1, 1)) * 0.9, oy: -(Math.random() * 0.42), rs: 0.4 + Math.random() * 0.7 })); })()
-    };
-  }
-
-  const clouds = [
-    ...Array.from({ length: 5 }, () => makeCloud(2)),
-    ...Array.from({ length: 5 }, () => makeCloud(1)),
-    ...Array.from({ length: 7 }, () => makeCloud(0))
-  ];
-
   let t = 0;
 
-  function drawSky() {
-    const sx = SUN.nx * W, sy = SUN.ny * H;
+  // ── 3D Room background ──────────────────────────────────────
+  const FOV3 = 520;
 
-    const base = ctx.createLinearGradient(0, 0, 0, H);
-    base.addColorStop(0,   '#8B1A30');
-    base.addColorStop(0.4, '#A82238');
-    base.addColorStop(0.7, '#BC2A40');
-    base.addColorStop(1,   '#962030');
-    ctx.fillStyle = base;
-    ctx.fillRect(0, 0, W, H);
+  // Icosahedron vertices (radius ~58)
+  const _φ = 1.6180339887;
+  const ICO_V_RAW = [
+    [0,1,_φ],[0,-1,_φ],[0,1,-_φ],[0,-1,-_φ],
+    [1,_φ,0],[-1,_φ,0],[1,-_φ,0],[-1,-_φ,0],
+    [_φ,0,1],[-_φ,0,1],[_φ,0,-1],[-_φ,0,-1]
+  ];
+  const ICO_VERTS = ICO_V_RAW.map(([x,y,z])=>{
+    const l=Math.sqrt(x*x+y*y+z*z); return [x/l*58,y/l*58,z/l*58];
+  });
+  const ICO_FACES = [
+    [0,1,8],[0,8,4],[0,4,5],[0,5,9],[0,9,1],
+    [1,6,8],[8,6,10],[8,10,4],[4,10,2],[4,2,5],
+    [5,2,11],[5,11,9],[9,11,7],[9,7,1],[1,7,6],
+    [3,6,7],[3,7,11],[3,11,2],[3,2,10],[3,10,6]
+  ];
+  const BG_LIGHT = (()=>{
+    const v=[0.55,-0.75,0.85]; const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);
+    return v.map(x=>x/l);
+  })();
 
-    const sunBloom = ctx.createRadialGradient(sx, sy, 0, sx, sy, H * 0.95);
-    sunBloom.addColorStop(0,    'rgba(248,158,38, 0.62)');
-    sunBloom.addColorStop(0.18, 'rgba(218, 92,20, 0.38)');
-    sunBloom.addColorStop(0.42, 'rgba(168, 42,16, 0.18)');
-    sunBloom.addColorStop(0.72, 'rgba(100, 12,10, 0.06)');
-    sunBloom.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = sunBloom;
-    ctx.fillRect(0, 0, W, H);
+  let bgRx=0, bgRy=0;
 
-    const core = ctx.createRadialGradient(sx, sy - H * 0.04, 0, sx, sy - H * 0.04, H * 0.30);
-    core.addColorStop(0,    'rgba(255,228,115, 0.50)');
-    core.addColorStop(0.22, 'rgba(248,158, 40, 0.28)');
-    core.addColorStop(0.55, 'rgba(192, 72, 18, 0.11)');
-    core.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = core;
-    ctx.fillRect(0, 0, W, H);
+  // Dust particles
+  const DUST = Array.from({length:38}, ()=>({
+    x: (Math.random()-0.5)*2,
+    y: (Math.random()-0.5)*2,
+    z: Math.random(),
+    r: 0.4+Math.random()*1.1,
+    spd: 0.00012+Math.random()*0.00018,
+    phase: Math.random()*Math.PI*2
+  }));
 
-    drawRays(sx, sy);
-
-    const sTL = ctx.createRadialGradient(-W*0.05, -H*0.05, 0, -W*0.05, -H*0.05, W * 0.92);
-    sTL.addColorStop(0,    'rgba(0,0,0,0.97)');
-    sTL.addColorStop(0.30, 'rgba(0,0,0,0.78)');
-    sTL.addColorStop(0.55, 'rgba(0,0,0,0.45)');
-    sTL.addColorStop(0.78, 'rgba(0,0,0,0.15)');
-    sTL.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = sTL;
-    ctx.fillRect(0, 0, W, H);
-
-    const sBL = ctx.createRadialGradient(0, H*1.05, 0, 0, H*1.05, W * 0.80);
-    sBL.addColorStop(0,    'rgba(2,0,1,0.97)');
-    sBL.addColorStop(0.35, 'rgba(2,0,1,0.70)');
-    sBL.addColorStop(0.62, 'rgba(0,0,0,0.28)');
-    sBL.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = sBL;
-    ctx.fillRect(0, 0, W, H);
-
-    const sTR = ctx.createRadialGradient(W*1.05, -H*0.05, 0, W*1.05, -H*0.05, W * 0.72);
-    sTR.addColorStop(0,    'rgba(0,0,0,0.88)');
-    sTR.addColorStop(0.40, 'rgba(0,0,0,0.50)');
-    sTR.addColorStop(0.70, 'rgba(0,0,0,0.16)');
-    sTR.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = sTR;
-    ctx.fillRect(0, 0, W, H);
-
-    const sBR = ctx.createRadialGradient(W*1.05, H*1.05, 0, W*1.05, H*1.05, W * 0.68);
-    sBR.addColorStop(0,    'rgba(0,0,0,0.88)');
-    sBR.addColorStop(0.42, 'rgba(0,0,0,0.48)');
-    sBR.addColorStop(0.75, 'rgba(0,0,0,0.14)');
-    sBR.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = sBR;
-    ctx.fillRect(0, 0, W, H);
-
-    const leftEdge = ctx.createLinearGradient(0, 0, W * 0.28, 0);
-    leftEdge.addColorStop(0,    'rgba(0,0,0,0.80)');
-    leftEdge.addColorStop(0.45, 'rgba(0,0,0,0.35)');
-    leftEdge.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = leftEdge;
-    ctx.fillRect(0, 0, W, H);
-
-    const rightEdge = ctx.createLinearGradient(W, 0, W * 0.75, 0);
-    rightEdge.addColorStop(0,   'rgba(0,0,0,0.65)');
-    rightEdge.addColorStop(0.5, 'rgba(0,0,0,0.22)');
-    rightEdge.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = rightEdge;
-    ctx.fillRect(0, 0, W, H);
-
-    const midBand = ctx.createLinearGradient(0, H * 0.25, 0, H * 0.65);
-    midBand.addColorStop(0,    'rgba(0,0,0,0)');
-    midBand.addColorStop(0.45, 'rgba(0,0,0,0.48)');
-    midBand.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = midBand;
-    ctx.fillRect(0, 0, W, H);
-
-    const upperBand = ctx.createLinearGradient(0, 0, 0, H * 0.40);
-    upperBand.addColorStop(0,   'rgba(0,0,0,0.42)');
-    upperBand.addColorStop(0.6, 'rgba(0,0,0,0.15)');
-    upperBand.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = upperBand;
-    ctx.fillRect(0, 0, W, H);
-
-    const diag1 = ctx.createLinearGradient(W * 0.58, 0, W * 0.05, H);
-    diag1.addColorStop(0,    'rgba(0,0,0,0)');
-    diag1.addColorStop(0.35, 'rgba(0,0,0,0.55)');
-    diag1.addColorStop(0.62, 'rgba(0,0,0,0.32)');
-    diag1.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = diag1;
-    ctx.fillRect(0, 0, W, H);
-
-    const diag2 = ctx.createLinearGradient(0, 0, W * 0.52, H);
-    diag2.addColorStop(0,    'rgba(0,0,0,0.38)');
-    diag2.addColorStop(0.38, 'rgba(0,0,0,0.20)');
-    diag2.addColorStop(0.68, 'rgba(0,0,0,0.06)');
-    diag2.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = diag2;
-    ctx.fillRect(0, 0, W, H);
-
-    const pool1 = ctx.createRadialGradient(W * 0.32, H * 0.10, 0, W * 0.32, H * 0.10, W * 0.44);
-    pool1.addColorStop(0,    'rgba(0,0,0,0.82)');
-    pool1.addColorStop(0.40, 'rgba(0,0,0,0.50)');
-    pool1.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = pool1;
-    ctx.fillRect(0, 0, W, H);
-
-    const pool2 = ctx.createRadialGradient(W * 0.15, H * 0.52, 0, W * 0.15, H * 0.52, W * 0.36);
-    pool2.addColorStop(0,    'rgba(0,0,0,0.85)');
-    pool2.addColorStop(0.45, 'rgba(0,0,0,0.48)');
-    pool2.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = pool2;
-    ctx.fillRect(0, 0, W, H);
-
-    const pool3 = ctx.createRadialGradient(W * 0.40, H * 0.85, 0, W * 0.40, H * 0.85, W * 0.40);
-    pool3.addColorStop(0,    'rgba(0,0,0,0.78)');
-    pool3.addColorStop(0.50, 'rgba(0,0,0,0.40)');
-    pool3.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = pool3;
-    ctx.fillRect(0, 0, W, H);
-
-    const pool4 = ctx.createRadialGradient(W * 0.88, H * 0.38, 0, W * 0.88, H * 0.38, W * 0.32);
-    pool4.addColorStop(0,    'rgba(0,0,0,0.75)');
-    pool4.addColorStop(0.48, 'rgba(0,0,0,0.38)');
-    pool4.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = pool4;
-    ctx.fillRect(0, 0, W, H);
-
-    const scAx = W * (0.26 + Math.sin(t * 0.0008) * 0.09);
-    const scAy = H * (0.38 + Math.cos(t * 0.0006) * 0.07);
-    const cloudA = ctx.createRadialGradient(scAx, scAy, 0, scAx, scAy, W * 0.30);
-    cloudA.addColorStop(0,    'rgba(0,0,0,0.45)');
-    cloudA.addColorStop(0.50, 'rgba(0,0,0,0.18)');
-    cloudA.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = cloudA;
-    ctx.fillRect(0, 0, W, H);
-
-    const scBx = W * (0.62 + Math.cos(t * 0.0007) * 0.07);
-    const scBy = H * (0.18 + Math.sin(t * 0.0009) * 0.06);
-    const cloudB = ctx.createRadialGradient(scBx, scBy, 0, scBx, scBy, W * 0.24);
-    cloudB.addColorStop(0,    'rgba(0,0,0,0.40)');
-    cloudB.addColorStop(0.52, 'rgba(0,0,0,0.14)');
-    cloudB.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = cloudB;
-    ctx.fillRect(0, 0, W, H);
-
-    const scCx = W * (0.10 + Math.sin(t * 0.0005) * 0.05);
-    const scCy = H * (0.72 + Math.cos(t * 0.0007) * 0.05);
-    const cloudC = ctx.createRadialGradient(scCx, scCy, 0, scCx, scCy, W * 0.26);
-    cloudC.addColorStop(0,    'rgba(0,0,0,0.50)');
-    cloudC.addColorStop(0.50, 'rgba(0,0,0,0.20)');
-    cloudC.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = cloudC;
-    ctx.fillRect(0, 0, W, H);
-
-    const vig = ctx.createRadialGradient(W * 0.50, H * 0.44, H * 0.12, W * 0.50, H * 0.44, H * 0.80);
-    vig.addColorStop(0,    'rgba(0,0,0,0)');
-    vig.addColorStop(0.52, 'rgba(0,0,0,0.28)');
-    vig.addColorStop(1,    'rgba(0,0,0,0.86)');
-    ctx.fillStyle = vig;
-    ctx.fillRect(0, 0, W, H);
-
-    const topBurn = ctx.createLinearGradient(0, 0, 0, H * 0.22);
-    topBurn.addColorStop(0,   'rgba(0,0,0,0.95)');
-    topBurn.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = topBurn;
-    ctx.fillRect(0, 0, W, H);
-
-    const botBurn = ctx.createLinearGradient(0, H * 0.78, 0, H);
-    botBurn.addColorStop(0,   'rgba(0,0,0,0)');
-    botBurn.addColorStop(1,   'rgba(0,0,0,0.92)');
-    ctx.fillStyle = botBurn;
-    ctx.fillRect(0, 0, W, H);
+  function proj3(x,y,z,cx,cy){
+    const s=FOV3/(FOV3+z+280); return [cx+x*s, cy+y*s];
   }
 
-  function drawRays(sx, sy) {
-    const len = Math.max(W, H) * 1.8;
-    RAYS.forEach(r => {
-      const pulse = r.alpha + Math.sin(t * 0.004 + r.phase) * 0.015;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, pulse);
-      const grad = ctx.createLinearGradient(sx, sy, sx + Math.cos(r.angle) * len * 0.5, sy + Math.sin(r.angle) * len * 0.5);
-      grad.addColorStop(0,    'rgba(255,210,80,0.9)');
-      grad.addColorStop(0.35, 'rgba(230,150,40,0.4)');
-      grad.addColorStop(1,    'rgba(0,0,0,0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + Math.cos(r.angle - r.hw) * len, sy + Math.sin(r.angle - r.hw) * len);
-      ctx.lineTo(sx + Math.cos(r.angle + r.hw) * len, sy + Math.sin(r.angle + r.hw) * len);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    });
+  function rot3(v,rx,ry){
+    let [x,y,z]=v;
+    const cxr=Math.cos(rx),sxr=Math.sin(rx);
+    const y2=y*cxr-z*sxr, z2=y*sxr+z*cxr;
+    const cyr=Math.cos(ry),syr=Math.sin(ry);
+    return [x*cyr+z2*syr, y2, -x*syr+z2*cyr];
   }
 
-  function drawCloud(c) {
-    const progress = (c.x + t * c.speed * 0.0007) % 1.18 - 0.09;
-    const cx = progress * W;
-    const cy = c.y * H;
-    const cw = c.w * W, ch = c.h * H;
+  function drawRoom() {
+    const cx=W*0.5, cy=H*0.44;
+    const rw=Math.min(W*0.54,500);
+    const rh=Math.min(H*0.46,400);
+    const rd=620;
 
-    const sx = SUN.nx * W, sy = SUN.ny * H;
-    const dx = cx - sx, dy = cy - sy;
-    const lit = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / (W * 0.55));
+    // Fill
+    ctx.fillStyle='#030001'; ctx.fillRect(0,0,W,H);
 
-    const bodyR = Math.round(75  + lit * 85);
-    const bodyG = Math.round(12  + lit * 42);
-    const bodyB = Math.round(20  + lit * 10);
-    const baseAlpha = [0.40, 0.26, 0.15][c.depth];
+    // Projected corners helpers
+    const p=(...a)=>proj3(...a,cx,cy);
 
-    ctx.globalAlpha = baseAlpha;
-    ctx.fillStyle = `rgb(${bodyR},${bodyG},${bodyB})`;
-    c.puffs.forEach(p => {
-      ctx.beginPath();
-      ctx.ellipse(cx + p.ox * cw, cy + p.oy * ch, cw * 0.22 * p.rs, ch * 0.58 * p.rs, 0, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    // Back wall
+    const bTL=p(-rw,-rh,rd), bTR=p(rw,-rh,rd);
+    const bBL=p(-rw,rh,rd),  bBR=p(rw,rh,rd);
+    const bwG=ctx.createLinearGradient(cx,bTL[1],cx,bBL[1]);
+    bwG.addColorStop(0,'#0B0203'); bwG.addColorStop(0.45,'#1E0507');
+    bwG.addColorStop(0.72,'#220508'); bwG.addColorStop(1,'#080102');
+    ctx.fillStyle=bwG;
+    ctx.beginPath(); ctx.moveTo(bTL[0],bTL[1]); ctx.lineTo(bTR[0],bTR[1]);
+    ctx.lineTo(bBR[0],bBR[1]); ctx.lineTo(bBL[0],bBL[1]); ctx.closePath(); ctx.fill();
 
-    if (lit > 0.12) {
-      c.puffs.forEach(p => {
-        const px = cx + p.ox * cw, py = cy + p.oy * ch;
-        const rx = cw * 0.22 * p.rs, ry = ch * 0.58 * p.rs;
-        ctx.globalAlpha = baseAlpha * lit * 0.9;
-        ctx.fillStyle = 'rgba(225,150,45,1)';
-        ctx.beginPath();
-        ctx.ellipse(px, py, rx * 1.10, ry * 1.10, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = baseAlpha * 2.6;
-        ctx.fillStyle = `rgb(${bodyR},${bodyG},${bodyB})`;
-        ctx.beginPath();
-        ctx.ellipse(px, py, rx * 0.96, ry * 0.96, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
+    // Back wall warm centre glow
+    const bCx=(bTL[0]+bTR[0])/2, bCy=bTL[1]+(bBL[1]-bTL[1])*0.52;
+    const bwGlow=ctx.createRadialGradient(bCx,bCy,0,bCx,bCy,rw*1.0);
+    bwGlow.addColorStop(0,'rgba(195,80,18,0.20)'); bwGlow.addColorStop(0.5,'rgba(140,40,10,0.08)');
+    bwGlow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=bwGlow; ctx.fillRect(0,0,W,H);
+
+    // Left wall
+    const cNL=p(-rw,-rh,0), fNL=p(-rw,rh,0);
+    const cFL=p(-rw,-rh,rd), fFL=p(-rw,rh,rd);
+    const lwG=ctx.createLinearGradient(cNL[0],0,cFL[0],0);
+    lwG.addColorStop(0,'#050102'); lwG.addColorStop(1,'#0D0204');
+    ctx.fillStyle=lwG;
+    ctx.beginPath(); ctx.moveTo(cNL[0],cNL[1]); ctx.lineTo(cFL[0],cFL[1]);
+    ctx.lineTo(fFL[0],fFL[1]); ctx.lineTo(fNL[0],fNL[1]); ctx.closePath(); ctx.fill();
+
+    // Right wall
+    const cNR=p(rw,-rh,0), fNR=p(rw,rh,0);
+    const cFR=p(rw,-rh,rd), fFR=p(rw,rh,rd);
+    const rwG=ctx.createLinearGradient(cNR[0],0,cFR[0],0);
+    rwG.addColorStop(0,'#050102'); rwG.addColorStop(1,'#0D0204');
+    ctx.fillStyle=rwG;
+    ctx.beginPath(); ctx.moveTo(cNR[0],cNR[1]); ctx.lineTo(cFR[0],cFR[1]);
+    ctx.lineTo(fFR[0],fFR[1]); ctx.lineTo(fNR[0],fNR[1]); ctx.closePath(); ctx.fill();
+
+    // Ceiling
+    ctx.fillStyle='#040102';
+    ctx.beginPath(); ctx.moveTo(cNL[0],cNL[1]); ctx.lineTo(cNR[0],cNR[1]);
+    ctx.lineTo(cFR[0],cFR[1]); ctx.lineTo(cFL[0],cFL[1]); ctx.closePath(); ctx.fill();
+
+    // Floor
+    const fGrad=ctx.createLinearGradient(cx,fNL[1],cx,fFL[1]);
+    fGrad.addColorStop(0,'#080104'); fGrad.addColorStop(0.6,'#100204'); fGrad.addColorStop(1,'#0C0203');
+    ctx.fillStyle=fGrad;
+    ctx.beginPath(); ctx.moveTo(fNL[0],fNL[1]); ctx.lineTo(fNR[0],fNR[1]);
+    ctx.lineTo(fFR[0],fFR[1]); ctx.lineTo(fFL[0],fFL[1]); ctx.closePath(); ctx.fill();
+
+    // Floor warm spotlight pool
+    const spFX=p(0,rh,rd*0.5)[0], spFY=p(0,rh,rd*0.5)[1];
+    const fSpot=ctx.createRadialGradient(spFX,spFY,0,spFX,spFY,rw*0.52);
+    fSpot.addColorStop(0,'rgba(210,100,20,0.28)'); fSpot.addColorStop(0.45,'rgba(150,55,12,0.12)');
+    fSpot.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(fNL[0],fNL[1]); ctx.lineTo(fNR[0],fNR[1]);
+    ctx.lineTo(fFR[0],fFR[1]); ctx.lineTo(fFL[0],fFL[1]); ctx.closePath();
+    ctx.clip(); ctx.fillStyle=fSpot; ctx.fillRect(0,0,W,H); ctx.restore();
+
+    // Floor perspective grid lines (subtle)
+    ctx.save(); ctx.globalAlpha=0.055; ctx.strokeStyle='#D47020'; ctx.lineWidth=0.7;
+    for(let i=-4;i<=4;i++){
+      const gNear=p(i*rw/4,rh,0), gFar=p(i*rw/4,rh,rd);
+      ctx.beginPath(); ctx.moveTo(gNear[0],gNear[1]); ctx.lineTo(gFar[0],gFar[1]); ctx.stroke();
     }
-    ctx.globalAlpha = 1;
-  }
+    for(let d=0;d<=1;d+=0.25){
+      const gL=p(-rw,rh,rd*d), gR=p(rw,rh,rd*d);
+      ctx.beginPath(); ctx.moveTo(gL[0],gL[1]); ctx.lineTo(gR[0],gR[1]); ctx.stroke();
+    }
+    ctx.restore();
 
-  function drawMotes() {
-    motes.forEach(m => {
-      m.phase += 0.007;
-      m.x += m.drift;
-      m.y += m.bob * Math.sin(m.phase);
-      if (m.x > 1.02) m.x = -0.02;
-      if (m.x < -0.02) m.x = 1.02;
-      const dx = m.x - SUN.nx, dy = m.y - SUN.ny;
-      const prox = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / 0.50);
-      ctx.globalAlpha = m.alpha * prox * (0.6 + Math.sin(m.phase) * 0.4);
-      ctx.fillStyle = '#E8A030';
+    // Spotlight cone from ceiling lamp to floor
+    const lampX=p(0,-rh,rd*0.5)[0], lampY=p(0,-rh,rd*0.5)[1];
+    const coneBot=p(0,rh*0.05,rd*0.5);
+    const coneSpread=rw*0.32;
+    const coneG=ctx.createLinearGradient(lampX,lampY,coneBot[0],coneBot[1]);
+    coneG.addColorStop(0,'rgba(255,190,60,0.32)'); coneG.addColorStop(0.25,'rgba(220,110,28,0.15)');
+    coneG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save(); ctx.globalCompositeOperation='screen';
+    ctx.fillStyle=coneG;
+    ctx.beginPath(); ctx.moveTo(lampX,lampY);
+    ctx.lineTo(coneBot[0]-coneSpread,coneBot[1]); ctx.lineTo(coneBot[0]+coneSpread,coneBot[1]);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+
+    // Lamp glow point
+    const lampGlow=ctx.createRadialGradient(lampX,lampY,0,lampX,lampY,rh*0.22);
+    lampGlow.addColorStop(0,'rgba(255,215,90,0.72)'); lampGlow.addColorStop(0.07,'rgba(240,150,45,0.32)');
+    lampGlow.addColorStop(0.3,'rgba(200,80,20,0.10)'); lampGlow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=lampGlow; ctx.fillRect(0,0,W,H);
+
+    // Ceiling lamp fixture (small rectangle)
+    const fixtW=18, fixtH=8;
+    ctx.fillStyle='#2A0808';
+    ctx.fillRect(lampX-fixtW/2, lampY-2, fixtW, fixtH);
+    ctx.fillStyle='rgba(255,200,80,0.55)';
+    ctx.fillRect(lampX-fixtW/2+2, lampY, fixtW-4, fixtH-3);
+
+    // ── Floating 3D icosahedron ──────────────────────────────
+    const objX=p(0,0,rd*0.5)[0];
+    const objBaseY=p(0,0,rd*0.5)[1];
+    const objY=objBaseY + Math.sin(t*0.012)*5; // gentle float
+
+    const rotVerts=ICO_VERTS.map(v=>rot3(v,bgRx,bgRy));
+    const sortedFaces=ICO_FACES.map(([a,b,c])=>{
+      const verts=[rotVerts[a],rotVerts[b],rotVerts[c]];
+      return { verts, avgZ:(verts[0][2]+verts[1][2]+verts[2][2])/3 };
+    }).sort((a,b)=>b.avgZ-a.avgZ);
+
+    sortedFaces.forEach(({verts})=>{
+      const ax=verts[1][0]-verts[0][0],ay=verts[1][1]-verts[0][1],az=verts[1][2]-verts[0][2];
+      const bx=verts[2][0]-verts[0][0],by=verts[2][1]-verts[0][1],bz=verts[2][2]-verts[0][2];
+      const nx=ay*bz-az*by, ny=az*bx-ax*bz, nz=ax*by-ay*bx;
+      const nl=Math.sqrt(nx*nx+ny*ny+nz*nz);
+      if(nl===0||nz/nl<0) return;
+      const dot=Math.max(0,(nx*BG_LIGHT[0]+ny*BG_LIGHT[1]+nz*BG_LIGHT[2])/nl);
+      const br=0.08+0.92*dot;
       ctx.beginPath();
-      ctx.arc(m.x * W, m.y * H, m.r, 0, Math.PI * 2);
+      ctx.moveTo(objX+verts[0][0], objY+verts[0][1]);
+      ctx.lineTo(objX+verts[1][0], objY+verts[1][1]);
+      ctx.lineTo(objX+verts[2][0], objY+verts[2][1]);
+      ctx.closePath();
+      ctx.fillStyle=`rgb(${Math.round(22+br*175)},${Math.round(3+br*52)},${Math.round(5+br*30)})`;
       ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=0.55; ctx.stroke();
     });
-    ctx.globalAlpha = 1;
+
+    // Gem glow
+    const gemGlow=ctx.createRadialGradient(objX,objY,0,objX,objY,80);
+    gemGlow.addColorStop(0,'rgba(220,100,25,0.18)'); gemGlow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gemGlow; ctx.fillRect(0,0,W,H);
+
+    // Object shadow on floor (flattened ellipse)
+    const shadowFY=p(0,rh*0.88,rd*0.5)[1];
+    ctx.save();
+    ctx.translate(objX, shadowFY);
+    ctx.scale(1, 0.22);
+    const shadG=ctx.createRadialGradient(0,0,0,0,0,62);
+    shadG.addColorStop(0,'rgba(0,0,0,0.55)'); shadG.addColorStop(0.5,'rgba(0,0,0,0.22)');
+    shadG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=shadG; ctx.beginPath(); ctx.arc(0,0,62,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // Suspension wire
+    const wireTop=p(0,-rh,rd*0.5);
+    ctx.save(); ctx.globalAlpha=0.18; ctx.strokeStyle='#C06030'; ctx.lineWidth=0.8;
+    ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.moveTo(wireTop[0],wireTop[1]); ctx.lineTo(objX,objY-58);
+    ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+
+    // Dust particles
+    ctx.save();
+    DUST.forEach(d=>{
+      d.y -= d.spd;
+      if(d.y < -1) d.y=1;
+      const wx=d.x*rw*0.9, wy=d.y*rh*0.9, wz=d.z*rd;
+      const [px,py]=proj3(wx,wy,wz,cx,cy);
+      const alpha=0.06+0.08*Math.sin(t*0.018+d.phase);
+      ctx.beginPath(); ctx.arc(px,py,d.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(220,120,40,${alpha})`; ctx.fill();
+    });
+    ctx.restore();
+
+    // Vignette
+    const vig=ctx.createRadialGradient(W*0.5,H*0.5,H*0.08,W*0.5,H*0.5,H*0.88);
+    vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(0.55,'rgba(0,0,0,0.38)');
+    vig.addColorStop(1,'rgba(0,0,0,0.90)');
+    ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
   }
 
   function frame() {
     t++;
-    drawSky();
-    [2, 1, 0].forEach(d => clouds.filter(c => c.depth === d).forEach(drawCloud));
-    drawMotes();
+    bgRx += 0.0022;
+    bgRy += 0.0038;
+    drawRoom();
     requestAnimationFrame(frame);
   }
 
@@ -804,7 +887,7 @@
 
     audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.40;
+    masterGain.gain.value = 0.52;
     masterGain.connect(audioCtx.destination);
 
     // Reverb chain
@@ -900,6 +983,14 @@
     masterGain.gain.setTargetAtTime(pct / 100 * 0.72, audioCtx.currentTime, 0.08);
   }
 
+  document.getElementById('btnPlay').addEventListener('click', () => {
+    document.getElementById('gameScreen').style.display = 'block';
+  });
+
+  document.getElementById('btnBackToMenu').addEventListener('click', () => {
+    document.getElementById('gameScreen').style.display = 'none';
+  });
+
   // Start audio on first any-click (browser autoplay policy)
   document.addEventListener('click', () => { initAudio(); }, { once: true });
 
@@ -945,7 +1036,7 @@
       `linear-gradient(to right, #D4822A ${pct}, #5A2020 ${pct})`;
   });
   // Init fill
-  volSlider.style.background = 'linear-gradient(to right, #D4822A 40%, #5A2020 40%)';
+  volSlider.style.background = 'linear-gradient(to right, #D4822A 52%, #5A2020 52%)';
 
   // Reset game — two-step confirmation
   let resetStep = 0;
@@ -974,6 +1065,436 @@
         btnReset.classList.remove('done');
       }, 2200);
     }
+  });
+
+  // ── Shadowmatic Engine — unified 3D scene ──────────────────
+
+  // Ellipse point generator used for multi-part levels
+  const _ell=(rx,ry,n)=>Array.from({length:n},(_,i)=>{
+    const a=(i/n)*Math.PI*2;
+    return [Math.round(rx*Math.sin(a)), Math.round(-ry*Math.cos(a))];
+  });
+
+  const SHADOW_LEVELS = [
+    // ── Level 1: Rabbit — faithful Shadowmatic recreation ──────────
+    { name:'Rabbit', hint:'A timid creature', startRx:0.88, startRy:1.30,
+      parts:[
+        { dx:2,   dy: 26, depth:44, pts:_ell(35,44,16) }, // body
+        { dx:-1,  dy:-18, depth:36, pts:_ell(21,24,14) }, // head
+        { dx:-13, dy:-54, depth:16, pts:_ell(7,23,10)  }, // left ear
+        { dx: 7,  dy:-55, depth:16, pts:_ell(7,23,10)  }, // right ear
+        { dx: 40, dy: 12, depth:12, pts:_ell(12,9,8)   }, // tail
+        { dx:-14, dy: 50, depth:18, pts:_ell(10,8,8)   }, // front paw
+      ],
+      blobs:[
+        { x:2,   y:26,  z:0,  rw:36, rh:46 },
+        { x:-1,  y:-18, z:7,  rw:22, rh:25 },
+        { x:-13, y:-54, z:4,  rw:7,  rh:24 },
+        { x:7,   y:-55, z:4,  rw:7,  rh:24 },
+        { x:40,  y:12,  z:-3, rw:12, rh:9  },
+        { x:-14, y:50,  z:9,  rw:10, rh:8  },
+      ]
+    },
+    // Level 2 — 5-point star, a bit more complex
+    { name:'Star',       hint:'Five bright points',     depth:32, startRx:0.6, startRy:0.9,
+      pts:[[0,-62],[14,-20],[58,-18],[22,10],[36,52],[0,26],[-36,52],[-22,10],[-58,-18],[-14,-20]] },
+    // Level 3 — heart with subtle curve-like detail
+    { name:'Heart',      hint:'Full of love',           depth:35, startRx:0.7, startRy:1.1,
+      pts:[[0,52],[-18,36],[-45,18],[-56,-4],[-55,-24],[-42,-50],[-20,-54],[-4,-40],[0,-28],[4,-40],[20,-54],[42,-50],[55,-24],[56,-4],[45,18],[18,36]] },
+    // Level 4 — arrow pointing right
+    { name:'Arrow',      hint:'Points the way',         depth:35, startRx:0.75, startRy:1.2,
+      pts:[[65,0],[20,-40],[20,-18],[-58,-18],[-58,-6],[-72,-6],[-72,6],[-58,6],[-58,18],[20,18],[20,40]] },
+    // Level 5 — gem shape (octagon with cut corners)
+    { name:'Gem',        hint:'A precious stone',       depth:30, startRx:0.8, startRy:1.3,
+      pts:[[0,-66],[28,-50],[52,-20],[58,18],[38,55],[0,66],[-38,55],[-58,18],[-52,-20],[-28,-50]] },
+    // Level 6 — pine tree with trunk
+    { name:'Pine Tree',  hint:'Evergreen in shadow',    depth:40, startRx:0.85, startRy:1.35,
+      pts:[[0,-66],[32,-28],[20,-28],[42,4],[26,4],[48,36],[14,36],[14,55],[-14,55],[-14,36],[-48,36],[-26,4],[-42,4],[-20,-28],[-32,-28]] },
+    // Level 7 — ornate cross
+    { name:'Cross',      hint:'Four equal arms',        depth:28, startRx:0.9, startRy:1.4,
+      pts:[[-14,-62],[14,-62],[14,-30],[30,-42],[42,-30],[30,-14],[62,-14],[62,14],[30,14],[42,30],[30,42],[14,30],[14,62],[-14,62],[-14,30],[-30,42],[-42,30],[-30,14],[-62,14],[-62,-14],[-30,-14],[-42,-30],[-30,-42],[-14,-30]] },
+    // Level 8 — crown with 5 points
+    { name:'Crown',      hint:'Fit for a king',         depth:30, startRx:0.95, startRy:1.45,
+      pts:[[-62,38],[-62,-6],[-46,8],[-38,-20],[-22,-50],[0,-30],[22,-50],[38,-20],[46,8],[62,-6],[62,38],[-62,38]] },
+    // Level 9 — fish with tail detail
+    { name:'Fish',       hint:'Swims in the deep',      depth:30, startRx:1.0, startRy:1.5,
+      pts:[[-68,0],[-55,-10],[-30,-26],[0,-20],[30,-36],[52,-46],[60,-20],[58,0],[60,20],[52,46],[30,36],[0,20],[-30,26],[-55,10],[-68,0],[-60,-12],[-68,0]] },
+    // Level 10 — soaring bird
+    { name:'Eagle',      hint:'Wings spread wide',      depth:25, startRx:1.05, startRy:1.55,
+      pts:[[0,-14],[-20,-6],[-50,-52],[-76,-36],[-64,2],[-72,28],[-36,10],[0,6],[36,10],[72,28],[64,2],[76,-36],[50,-52],[20,-6]] },
+    // Level 11 — castle tower
+    { name:'Castle',     hint:'Ancient fortress',       depth:38, startRx:1.1, startRy:1.6,
+      pts:[[-52,-62],[-52,-46],[-32,-46],[-32,-28],[-44,-28],[-44,62],[44,62],[44,-28],[32,-28],[32,-46],[52,-46],[52,-62],[36,-62],[36,-46],[20,-46],[20,-62],[4,-62],[4,-46],[-12,-46],[-12,-62],[-28,-62],[-28,-46],[-44,-46],[-44,-62]] },
+    // Level 12 — mushroom with spots detail
+    { name:'Mushroom',   hint:'Grows in the dark',      depth:35, startRx:1.15, startRy:1.65,
+      pts:[[0,-64],[-22,-58],[-42,-44],[-56,-22],[-58,8],[-50,28],[-36,38],[-22,38],[-22,64],[22,64],[22,38],[36,38],[50,28],[58,8],[56,-22],[42,-44],[22,-58]] },
+    // Level 13 — lightning bolt, sharper
+    { name:'Thunderbolt',hint:'Crack of lightning',     depth:28, startRx:1.2, startRy:1.7,
+      pts:[[24,-66],[38,-66],[14,-18],[48,-18],[22,66],[-24,66],[-38,66],[-14,18],[-48,18],[-22,-66]] },
+    // Level 14 — ornate sword with guard
+    { name:'Sword',      hint:'An ancient blade',       depth:25, startRx:1.25, startRy:1.75,
+      pts:[[0,-68],[8,-56],[8,-16],[52,0],[8,10],[8,28],[24,40],[24,62],[-24,62],[-24,40],[-8,28],[-8,10],[-52,0],[-8,-16],[-8,-56]] },
+    // Level 15 — butterfly, complex wings
+    { name:'Butterfly',  hint:'Dancing in shadow',      depth:20, startRx:1.3, startRy:1.8,
+      pts:[[0,10],[-8,0],[-20,-14],[-42,-44],[-68,-56],[-76,-28],[-68,-4],[-52,18],[-28,42],[-8,30],[0,22],[8,30],[28,42],[52,18],[68,-4],[76,-28],[68,-56],[42,-44],[20,-14],[8,0]] },
+  ];
+
+  let ssIdx=0, ssRx=0.65, ssRy=0.95, ssDrag=false, ssLX=0, ssLY=0, ssDone=false, ssRaf=null;
+
+  // ── 3D helpers ──────────────────────────────────────────────
+  function ssBuild(pts, depth) {
+    const d=depth/2, n=pts.length, faces=[];
+    faces.push({ v: pts.map(([x,y])=>[x,y,d]) });
+    faces.push({ v: [...pts].reverse().map(([x,y])=>[x,y,-d]) });
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n;
+      faces.push({ v:[[pts[i][0],pts[i][1],d],[pts[j][0],pts[j][1],d],[pts[j][0],pts[j][1],-d],[pts[i][0],pts[i][1],-d]] });
+    }
+    return faces;
+  }
+
+  function ssRot(v, rx, ry) {
+    let [x,y,z]=v;
+    const cxr=Math.cos(rx),sxr=Math.sin(rx),cyr=Math.cos(ry),syr=Math.sin(ry);
+    const y2=y*cxr-z*sxr, z2=y*sxr+z*cxr;
+    return [x*cyr+z2*syr, y2, -x*syr+z2*cyr];
+  }
+
+  function ssNorm(verts) {
+    const a=[verts[1][0]-verts[0][0],verts[1][1]-verts[0][1],verts[1][2]-verts[0][2]];
+    const b=[verts[2][0]-verts[0][0],verts[2][1]-verts[0][1],verts[2][2]-verts[0][2]];
+    const nx=a[1]*b[2]-a[2]*b[1], ny=a[2]*b[0]-a[0]*b[2], nz=a[0]*b[1]-a[1]*b[0];
+    const l=Math.sqrt(nx*nx+ny*ny+nz*nz);
+    return l>0?[nx/l,ny/l,nz/l]:[0,0,1];
+  }
+
+  function ssMatchScore() {
+    const sx=Math.abs(Math.sin(ssRx)), sy=Math.abs(Math.sin(ssRy));
+    const cxs=Math.cos(ssRx)>0?1:0, cys=Math.cos(ssRy)>0?1:0;
+    return Math.max(0, 1 - (sx+sy)*cxs*cys/0.36);
+  }
+
+  function ssCheckSolved() {
+    return Math.abs(Math.sin(ssRx))<0.18 && Math.cos(ssRx)>0.97
+        && Math.abs(Math.sin(ssRy))<0.18 && Math.cos(ssRy)>0.97;
+  }
+
+  // ── Unified 3D level scene — Shadowmatic style ──────────────
+
+  // Builds all rotated faces for a level (single-part or multi-part).
+  // Returns {allFaces, maxExt, parts}.
+  function buildAllFaces(lvl, rx, ry) {
+    const parts = lvl.parts
+      ? lvl.parts
+      : [{pts:lvl.pts, depth:lvl.depth, dx:0, dy:0}];
+    let maxExt=0;
+    const allFaces=[];
+    parts.forEach(({pts,depth,dx=0,dy=0})=>{
+      pts.forEach(([x,y])=>{
+        maxExt=Math.max(maxExt, Math.sqrt((x+dx)**2+(y+dy)**2));
+      });
+      ssBuild(pts,depth).forEach(f=>{
+        const rv=f.v.map(([vx,vy,vz])=>ssRot([vx+dx,vy+dy,vz],rx,ry));
+        allFaces.push({v:rv, avgZ:rv.reduce((s,v)=>s+v[2],0)/rv.length});
+      });
+    });
+    const normParts=parts.map(({pts,dx=0,dy=0})=>({pts,dx,dy}));
+    return {allFaces, maxExt, parts:normParts};
+  }
+
+  // Light direction for the 3D object (from upper-right, camera side)
+  const SS_OBJ_LIGHT = (()=>{
+    const v=[0.55,-0.60,0.85]; const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);
+    return v.map(x=>x/l);
+  })();
+
+  // Draw a smooth porcelain-style blob (ellipse with radial gradient)
+  function drawBlob(c, cx, cy, sc, blob, lightDir) {
+    const bx=cx+blob.x*sc, by=cy+blob.y*sc;
+    const rx=blob.rw*sc, ry=blob.rh*sc;
+    // highlight offset — top-right (from light direction)
+    const hx=bx-rx*0.32, hy=by-ry*0.36;
+    const grad=c.createRadialGradient(hx,hy,rx*0.04, bx,by,Math.max(rx,ry)*1.05);
+    grad.addColorStop(0,   'rgba(248,240,224,1.0)'); // bright highlight
+    grad.addColorStop(0.28,'rgba(228,205,168,1.0)'); // warm cream
+    grad.addColorStop(0.60,'rgba(185,148,96,1.0)');  // mid tan
+    grad.addColorStop(0.85,'rgba(120,80,38,1.0)');   // dark edge
+    grad.addColorStop(1,   'rgba(60,28,8,1.0)');     // shadow edge
+    c.save();
+    c.beginPath();
+    c.ellipse(bx, by, rx, ry, 0, 0, Math.PI*2);
+    c.fillStyle=grad; c.fill();
+    // subtle specular dot
+    const sg=c.createRadialGradient(hx-rx*0.08,hy-ry*0.08,0,hx,hy,rx*0.38);
+    sg.addColorStop(0,'rgba(255,252,245,0.72)'); sg.addColorStop(1,'rgba(255,252,245,0)');
+    c.fillStyle=sg; c.fill();
+    c.restore();
+  }
+
+  function ssDrawScene(cvs, lvl, rx, ry) {
+    const c=cvs.getContext('2d');
+    const CW=cvs.width, CH=cvs.height;
+    const fov=520;
+    const vcx=CW*0.5, vcy=CH*0.44;
+
+    const rw=Math.min(CW*0.52, 480);
+    const rh=Math.min(CH*0.46, 390);
+    const rd=640;
+
+    function proj(x,y,z){ const s=fov/(fov+z+280); return [vcx+x*s, vcy+y*s]; }
+    function quad(p1,p2,p3,p4,fill){
+      c.beginPath(); c.moveTo(p1[0],p1[1]); c.lineTo(p2[0],p2[1]);
+      c.lineTo(p3[0],p3[1]); c.lineTo(p4[0],p4[1]); c.closePath();
+      c.fillStyle=fill; c.fill();
+    }
+
+    // ── 1. Dark wooden room ────────────────────────────────────
+    c.fillStyle='#05030a'; c.fillRect(0,0,CW,CH);
+
+    const bTL=proj(-rw,-rh,rd), bTR=proj(rw,-rh,rd);
+    const bBL=proj(-rw,rh,rd),  bBR=proj(rw,rh,rd);
+    const cNL=proj(-rw,-rh,0),  cNR=proj(rw,-rh,0);
+    const fNL=proj(-rw,rh,0),   fNR=proj(rw,rh,0);
+
+    // Back wall — dark warm wood base
+    quad(bTL,bTR,bBR,bBL,'#1a0d06');
+
+    // Horizontal planks on back wall
+    const plankCount=10;
+    const wallTop=bTL[1], wallBot=bBL[1], wallL=bTL[0], wallR=bTR[0];
+    for(let i=0;i<plankCount;i++){
+      const yA=wallTop+i*(wallBot-wallTop)/plankCount;
+      const yB=wallTop+(i+1)*(wallBot-wallTop)/plankCount;
+      const even=i%2===0;
+      c.beginPath();
+      c.moveTo(wallL,yA); c.lineTo(wallR,yA); c.lineTo(wallR,yB); c.lineTo(wallL,yB);
+      c.closePath();
+      c.fillStyle=even?'rgba(38,18,6,0.55)':'rgba(22,10,3,0.55)'; c.fill();
+      // plank seam
+      c.strokeStyle='rgba(8,3,1,0.70)'; c.lineWidth=0.8;
+      c.beginPath(); c.moveTo(wallL,yA); c.lineTo(wallR,yA); c.stroke();
+    }
+
+    // Floor — dark wooden boards
+    const flG=c.createLinearGradient(vcx,fNL[1],vcx,bBL[1]);
+    flG.addColorStop(0,'#0e0604'); flG.addColorStop(1,'#1a0a04');
+    quad(fNL,fNR,bBR,bBL,flG);
+    // Floor plank lines (perspective foreshortened)
+    for(let i=1;i<7;i++){
+      const py=fNL[1]+(bBL[1]-fNL[1])*i/7;
+      c.strokeStyle='rgba(4,2,1,0.55)'; c.lineWidth=0.6;
+      c.beginPath(); c.moveTo(0,py); c.lineTo(CW,py); c.stroke();
+    }
+
+    // Ceiling — very dark
+    quad(cNL,cNR,bTR,bTL,'#080406');
+
+    // Left wall — vertical planks
+    quad(cNL,bTL,bBL,fNL,'#120804');
+    for(let i=0;i<5;i++){
+      const f0=i/5, f1=(i+1)/5;
+      const tx0=cNL[0]+(bTL[0]-cNL[0])*f0, tx1=cNL[0]+(bTL[0]-cNL[0])*f1;
+      const bx0=fNL[0]+(bBL[0]-fNL[0])*f0, bx1=fNL[0]+(bBL[0]-fNL[0])*f1;
+      c.strokeStyle='rgba(4,1,0,0.60)'; c.lineWidth=0.7;
+      c.beginPath(); c.moveTo(tx0,cNL[1]); c.lineTo(bx0,fNL[1]); c.stroke();
+    }
+
+    // Right wall
+    quad(cNR,bTR,bBR,fNR,'#120804');
+
+    // ── 2. Warm spotlight on back wall (cream/white) ───────────
+    const wallCx = (bTL[0]+bTR[0])*0.5;
+    const wallCy = bTL[1] + (bBL[1]-bTL[1])*0.46;
+    const wallH  = bBL[1]-bTL[1];
+    const spotR  = wallH * 0.50;
+
+    c.save();
+    c.beginPath();
+    c.moveTo(bTL[0],bTL[1]); c.lineTo(bTR[0],bTR[1]);
+    c.lineTo(bBR[0],bBR[1]); c.lineTo(bBL[0],bBL[1]);
+    c.closePath(); c.clip();
+
+    // Outer warm haze
+    const wallLit=c.createRadialGradient(wallCx,wallCy,0,wallCx,wallCy,spotR*1.22);
+    wallLit.addColorStop(0,   'rgba(225,200,155,0.88)');
+    wallLit.addColorStop(0.30,'rgba(200,165,100,0.70)');
+    wallLit.addColorStop(0.60,'rgba(140, 90, 38,0.42)');
+    wallLit.addColorStop(0.85,'rgba( 55, 22,  6,0.18)');
+    wallLit.addColorStop(1,   'rgba(  0,  0,  0,0)');
+    c.fillStyle=wallLit; c.fillRect(0,0,CW,CH);
+
+    // Bright cream centre
+    const hotspot=c.createRadialGradient(wallCx,wallCy,0,wallCx,wallCy,spotR*0.50);
+    hotspot.addColorStop(0,  'rgba(252,248,235,0.96)');
+    hotspot.addColorStop(0.35,'rgba(245,230,185,0.72)');
+    hotspot.addColorStop(0.70,'rgba(220,180,100,0.30)');
+    hotspot.addColorStop(1,  'rgba(0,0,0,0)');
+    c.fillStyle=hotspot; c.fillRect(0,0,CW,CH);
+
+    // ── 3. Shadow inside spotlight ─────────────────────────────
+    const match=ssMatchScore();
+    const {allFaces, maxExt, parts:lvlParts}=buildAllFaces(lvl, rx, ry);
+    const shadowSc=spotR*0.62/maxExt;
+
+    c.fillStyle='rgba(3,1,1,0.97)';
+    allFaces.forEach(f=>{
+      c.beginPath();
+      c.moveTo(wallCx+f.v[0][0]*shadowSc, wallCy+f.v[0][1]*shadowSc);
+      f.v.forEach(v=>c.lineTo(wallCx+v[0]*shadowSc, wallCy+v[1]*shadowSc));
+      c.closePath(); c.fill();
+    });
+
+    // Target dashed outline
+    c.strokeStyle=`rgba(230,160,60,${0.14+match*0.72})`;
+    c.lineWidth=1.4+match*2.8;
+    c.setLineDash([5,5]);
+    lvlParts.forEach(({pts:pp,dx,dy})=>{
+      c.beginPath();
+      pp.forEach(([px,py],i)=>{
+        const sx=wallCx+(px+dx)*shadowSc, sy=wallCy+(py+dy)*shadowSc;
+        if(i===0) c.moveTo(sx,sy); else c.lineTo(sx,sy);
+      });
+      c.closePath(); c.stroke();
+    });
+    c.setLineDash([]);
+
+    // Gold glow when nearly solved
+    if(match>0.62){
+      const g=(match-0.62)/0.38;
+      c.save(); c.filter=`blur(${Math.round(6+g*13)}px)`;
+      c.strokeStyle=`rgba(220,155,40,${g*0.42})`; c.lineWidth=9+g*20;
+      lvlParts.forEach(({pts:pp,dx,dy})=>{
+        c.beginPath();
+        pp.forEach(([px,py],i)=>{
+          const sx=wallCx+(px+dx)*shadowSc, sy=wallCy+(py+dy)*shadowSc;
+          if(i===0) c.moveTo(sx,sy); else c.lineTo(sx,sy);
+        });
+        c.closePath(); c.stroke();
+      });
+      c.restore();
+    }
+    c.restore(); // end back-wall clip
+
+    // ── 4. 3D object on the left ──────────────────────────────
+    const objWX=-rw*0.16, objWY=-rh*0.02, objWZ=rd*0.48;
+    const objPt=proj(objWX, objWY, objWZ);
+    const OSX=objPt[0], OSY=objPt[1]+Math.sin(t*0.012)*3.5;
+    const objSc=spotR*0.50/maxExt;
+
+    // Warm ambient glow around object
+    const objGlowR=objSc*maxExt*1.7;
+    const objGlow=c.createRadialGradient(OSX+objSc*8,OSY-objSc*6,0,OSX,OSY,objGlowR);
+    objGlow.addColorStop(0,'rgba(180,110,30,0.18)'); objGlow.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=objGlow; c.fillRect(0,0,CW,CH);
+
+    if(lvl.blobs){
+      // Blob rendering — smooth porcelain spheres (Shadowmatic style)
+      // Sort blobs back-to-front by z (approximate)
+      const sortedBlobs=[...lvl.blobs].sort((a,b)=>a.z-b.z);
+      sortedBlobs.forEach(blob=>{
+        drawBlob(c, OSX, OSY, objSc, blob, SS_OBJ_LIGHT);
+      });
+    } else {
+      // Faceted polygon fallback
+      const drawFaces=[...allFaces].sort((a,b)=>b.avgZ-a.avgZ);
+      drawFaces.forEach(f=>{
+        const n=ssNorm(f.v);
+        if(n[2]<0) return;
+        const diff=Math.max(0, n[0]*SS_OBJ_LIGHT[0]+n[1]*SS_OBJ_LIGHT[1]+n[2]*SS_OBJ_LIGHT[2]);
+        const rim=Math.max(0, n[0]*0.52-n[1]*0.08+n[2]*0.12)*0.38;
+        const b=0.10+0.74*diff+rim;
+        const r=Math.round(25+b*198), g2=Math.round(7+b*120), bl=Math.round(3+b*54);
+        c.beginPath();
+        c.moveTo(OSX+f.v[0][0]*objSc, OSY+f.v[0][1]*objSc);
+        f.v.forEach(v=>c.lineTo(OSX+v[0]*objSc, OSY+v[1]*objSc));
+        c.closePath();
+        c.fillStyle=`rgb(${r},${g2},${bl})`; c.fill();
+        c.strokeStyle='rgba(12,2,1,0.50)'; c.lineWidth=0.55; c.stroke();
+      });
+    }
+
+    // Thin wire
+    const wireTop=proj(objWX, objWY-objSc*maxExt*0.85, objWZ);
+    const ceilPt =proj(objWX, -rh, objWZ);
+    c.save(); c.globalAlpha=0.20; c.strokeStyle='#806030'; c.lineWidth=0.7;
+    c.setLineDash([3,5]);
+    c.beginPath(); c.moveTo(ceilPt[0],ceilPt[1]); c.lineTo(wireTop[0],wireTop[1]);
+    c.stroke(); c.setLineDash([]); c.restore();
+
+    // Floor shadow
+    const fsY=proj(objWX, rh*0.92, objWZ)[1];
+    c.save(); c.translate(OSX,fsY); c.scale(1,0.18);
+    const fsG=c.createRadialGradient(0,0,0,0,0,objSc*maxExt*1.1);
+    fsG.addColorStop(0,'rgba(0,0,0,0.42)'); fsG.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=fsG; c.beginPath(); c.arc(0,0,objSc*maxExt*1.1,0,Math.PI*2);
+    c.fill(); c.restore();
+
+    // ── 5. Vignette ───────────────────────────────────────────
+    const vig=c.createRadialGradient(CW*0.5,CH*0.5,CH*0.06,CW*0.5,CH*0.5,CH*0.92);
+    vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(0.50,'rgba(0,0,0,0.30)');
+    vig.addColorStop(1,'rgba(0,0,0,0.92)');
+    c.fillStyle=vig; c.fillRect(0,0,CW,CH);
+  }
+
+  function ssResizeCanvas() {
+    const cvs=document.getElementById('gameCvs');
+    const r=cvs.getBoundingClientRect();
+    cvs.width=r.width|0; cvs.height=r.height|0;
+  }
+
+  function ssLoop() {
+    const cvs=document.getElementById('gameCvs');
+    const lvl=SHADOW_LEVELS[ssIdx];
+    ssDrawScene(cvs, lvl, ssRx, ssRy);
+    if(!ssDone && ssCheckSolved()) {
+      ssDone=true;
+      setTimeout(()=>document.getElementById('ssSolvedOverlay').classList.add('show'), 350);
+    }
+    ssRaf=requestAnimationFrame(ssLoop);
+  }
+
+  function openShadowLevel(idx) {
+    ssIdx=idx;
+    const lvl=SHADOW_LEVELS[idx];
+    ssRx=lvl.startRx ?? 0.65; ssRy=lvl.startRy ?? 0.95; ssDone=false;
+    document.getElementById('ssLevelName').textContent=`Level ${idx+1}  ·  ${lvl.name}`;
+    document.getElementById('ssHint').textContent=lvl.hint;
+    document.getElementById('ssSolvedOverlay').classList.remove('show');
+    document.getElementById('shadowScreen').classList.add('open');
+    setTimeout(()=>{ ssResizeCanvas(); if(ssRaf) cancelAnimationFrame(ssRaf); ssLoop(); }, 40);
+  }
+
+  document.getElementById('btnSsBack').addEventListener('click', ()=>{
+    document.getElementById('shadowScreen').classList.remove('open');
+    if(ssRaf){ cancelAnimationFrame(ssRaf); ssRaf=null; }
+  });
+
+  document.getElementById('ssNextBtn').addEventListener('click', ()=>{
+    openShadowLevel((ssIdx+1) % SHADOW_LEVELS.length);
+  });
+
+  const gameCvs=document.getElementById('gameCvs');
+  gameCvs.addEventListener('mousedown', e=>{ ssDrag=true; ssLX=e.clientX; ssLY=e.clientY; });
+  gameCvs.addEventListener('touchstart', e=>{ e.preventDefault(); ssDrag=true; ssLX=e.touches[0].clientX; ssLY=e.touches[0].clientY; },{passive:false});
+  document.addEventListener('mousemove', e=>{
+    if(!ssDrag||ssDone) return;
+    ssRy+=(e.clientX-ssLX)*0.009; ssRx+=(e.clientY-ssLY)*0.009;
+    ssLX=e.clientX; ssLY=e.clientY;
+  });
+  document.addEventListener('touchmove', e=>{
+    if(!ssDrag||ssDone) return; e.preventDefault();
+    ssRy+=(e.touches[0].clientX-ssLX)*0.009; ssRx+=(e.touches[0].clientY-ssLY)*0.009;
+    ssLX=e.touches[0].clientX; ssLY=e.touches[0].clientY;
+  },{passive:false});
+  document.addEventListener('mouseup', ()=>ssDrag=false);
+  document.addEventListener('touchend', ()=>ssDrag=false);
+
+  document.querySelectorAll('.lvl-btn').forEach((btn,i)=>{
+    btn.addEventListener('click', ()=>openShadowLevel(i));
+  });
+
+  window.addEventListener('resize', ()=>{
+    if(document.getElementById('shadowScreen').classList.contains('open')) ssResizeCanvas();
   });
 </script>
 </body>
